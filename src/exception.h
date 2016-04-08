@@ -13,9 +13,15 @@ jmp_buf breakSig;
 
 typedef enum exceptions {
     OK,
-    SEGFAULT_EXCEPTION,
-    DIVIDE_BY_ZERO_EXCEPTION,
-    UNKOWN_EXCEPTION
+    SEGFAULT_EXCEPTION,            // SIGSEGV
+    DIVIDE_BY_ZERO_EXCEPTION,      // SIGFPE
+    ILLEGAL_INSTRUCTION_EXCEPTION, // SIGILL
+    BUS_ERROR_EXCEPTION,           // SIGBUS
+    ABORT_EXCEPTION,               // SIGABRT
+    TRAP_EXCEPTION,                // SIGTRAP
+    EMULATOR_TRAP_EXCEPTION,       // SIGEMT
+    SYS_CALL_EXCEPTION,            // SIGSYS
+    UNKOWN_EXCEPTION               // No matching fault
 } exceptions;
 
 

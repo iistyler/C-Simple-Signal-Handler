@@ -6,24 +6,28 @@ int main() {
     try {
 
         // Throw a segfault
-        raise(SIGSEGV);
-        printf("SS\n");
+        printf("Running okay..\n");
+        int bad = 0;
+        float other = 1/bad;
+        printf("Passed the exception!\n");
 
-    } catch (UNKOWN_EXCEPTION) {
+    } catch (DIVIDE_BY_ZERO_EXCEPTION) {
 
-        // Other exception
-        printf("Unexpected error has occurred\n");
-        
+        // Divided by zero
+        printf("Oh no a division by zero\n");
+
     } catch (SEGFAULT_EXCEPTION) {
 
         // Recover from segfault
-        printf("Oh no!\n");
+        printf("Oh no a segfault!\n");
 
     } finally {
 
         // No exception has occurred
         printf("State is OK\n");
     }
+
+    printf("Now let's continue...\n");
 
     return 0;   
 }
