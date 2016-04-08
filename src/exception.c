@@ -1,13 +1,61 @@
-#include "exceptionHandler.h"
+#include "exception.h"
 
-static int handleException = -1;
+static exceptions handleException = OK;
+
+exceptions switchToException (int sig) {
+    exceptions currentException = OK;
+
+    switch(sig) {
+        case SIGSEGV:
+            currentException = SEGFAULT_EXCEPTION;
+            break;
+        case SIGFPE:
+            currentException = DIVIDE_BY_ZERO_EXCEPTION;
+            break;
+        case SIGILL:
+            currentException = ILLEGAL_INSTRUCTION_EXCEPTION;
+            break;
+        case SIGBUS:
+            currentException = BUS_ERROR_EXCEPTION;
+            break;
+        case SIGABRT:
+            currentException = ABORT_EXCEPTION;
+            break;
+        case SIGTRAP:
+            currentException = TRAP_EXCEPTION;
+            break;
+        case SIGEMT:
+            currentException = EMULATOR_TRAP_EXCEPTION;
+            break;
+        case SIGSYS:
+            currentException = SYS_CALL_EXCEPTION;
+            break;
+        default:
+            currentException = UNKOWN_EXCEPTION;
+            fprintf(stderr, "Unexpected exception occurred: %d\n", sig);
+            break;
+    }
+    return currentException;
+}
 
 void handler(int sig) {
-    handleException = 1;
+    exceptions currentException = OK;
+    currentException = switchToException(sig);
+    
+    handleException = currentException;
+    longjmp(breakSig,1);
 }
 
 int catchError(int currentLine) {
     signal(SIGSEGV, handler);
+    signal(SIGFPE, handler);
+    signal(SIGILL, handler);
+    signal(SIGBUS, handler);
+    signal(SIGABRT, handler);
+    signal(SIGIOT, handler);
+    signal(SIGTRAP, handler);
+    signal(SIGEMT, handler);
+    signal(SIGSYS, handler);
 
     static int line = -1;
     if (line == currentLine) {
@@ -18,13 +66,19 @@ int catchError(int currentLine) {
     }
 }
 
-int thrownError() {
-    if (handleException == 1)
+int thrownError(exceptions exception) {
+    if (handleException == exception)
         return 1;
     else
         return 0;
 }
 
+int noException() {
+    if (handleException == OK)
+        return 1;
+    else
+        return 0;
+}
 
 /* Allows user to print the exception to stderr */
 void print_error( Error err ) {
@@ -43,4 +97,3 @@ void fprint_error(Error err, FILE* stream) {
         fprintf(stream, "Exception %d thrown from function %s [%s:%d]\n", err.exception, \
                             err.function, err.file, err.line); 
 }
-
