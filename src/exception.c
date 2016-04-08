@@ -1,9 +1,20 @@
-#include "exceptionHandler.h"
+#include "exception.h"
 
-static int handleException = -1;
+static exceptions handleException = OK;
 
 void handler(int sig) {
-    handleException = 1;
+    exceptions currentException = OK;
+    switch(sig) {
+        case 11:
+            currentException = SEGFAULT_EXCEPTION;
+            break;
+        default:
+            currentException = UNKOWN_EXCEPTION;
+            break;
+    }
+    
+    handleException = currentException;
+    longjmp(breakSig,1);
 }
 
 int catchError(int currentLine) {
@@ -18,8 +29,15 @@ int catchError(int currentLine) {
     }
 }
 
-int thrownError() {
-    if (handleException == 1)
+int thrownError(exceptions exception) {
+    if (handleException == exception)
+        return 1;
+    else
+        return 0;
+}
+
+int noException() {
+    if (handleException == OK)
         return 1;
     else
         return 0;
