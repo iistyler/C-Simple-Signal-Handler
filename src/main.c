@@ -2,12 +2,12 @@
 #include "exception.h"
 
 int main() {
+    int bad = 0;
     
     try {
 
         // Throw a segfault
         printf("Running okay..\n");
-        int bad = 0;
         float other = 1/bad;
         printf("Passed the exception!\n");
 
@@ -15,6 +15,8 @@ int main() {
 
         // Divided by zero
         printf("Oh no a division by zero\n");
+        bad = 1;
+        retry;
 
     } catch (SEGFAULT_EXCEPTION) {
 
