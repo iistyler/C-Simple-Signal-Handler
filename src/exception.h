@@ -10,7 +10,7 @@
 #include <setjmp.h>
 #include <execinfo.h>
 
-jmp_buf breakSig;
+jmp_buf break_signal;
 
 typedef enum exceptions {
     OK,
@@ -22,7 +22,7 @@ typedef enum exceptions {
     TRAP_EXCEPTION,                // SIGTRAP
     EMULATOR_TRAP_EXCEPTION,       // SIGEMT
     SYS_CALL_EXCEPTION,            // SIGSYS
-    UNKOWN_EXCEPTION               // No matching fault
+    UNKNOWN_EXCEPTION               // No matching fault
 } exceptions;
 
 
@@ -43,14 +43,14 @@ void print_error (Error err);
 void fprint_error (Error err, FILE * stream);
 
 
-int catchError(int currentLine);
-int thrownError(exceptions exception);
-int noException();
-void revertBack();
+int catch_error(int current_line);
+int thrown_error(exceptions exception);
+int no_exception();
+void revert_back();
 
-#define try setjmp(breakSig);while(catchError(__LINE__))
-#define catch(x) ;if(thrownError(x))
-#define finally ;if(noException())
-#define retry revertBack()
+#define try setjmp(break_signal);while(catch_error(__LINE__))
+#define catch(x) ;if(thrown_error(x))
+#define finally ;if(no_exception())
+#define retry revert_back()
 
 #endif
