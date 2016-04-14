@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -Wall -pedantic -std=c99
+FLAGS = -Wall -std=c99
 
 all: src/main.c src/exception.c src/main.h src/exception.h
 	$(CC) $(FLAGS) src/main.c src/exception.c -o bin/a.out
