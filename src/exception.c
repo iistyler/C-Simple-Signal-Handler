@@ -6,34 +6,16 @@ exceptions switch_to_exception (int sig) {
     exceptions current_exception = OK;
 
     switch(sig) {
-        case SIGSEGV:
-            current_exception = SEGFAULT_EXCEPTION;
-            break;
-        case SIGFPE:
-            current_exception = DIVIDE_BY_ZERO_EXCEPTION;
-            break;
-        case SIGILL:
-            current_exception = ILLEGAL_INSTRUCTION_EXCEPTION;
-            break;
-        case SIGBUS:
-            current_exception = BUS_ERROR_EXCEPTION;
-            break;
-        case SIGABRT:
-            current_exception = ABORT_EXCEPTION;
-            break;
-        case SIGTRAP:
-            current_exception = TRAP_EXCEPTION;
-            break;
-        /**case SIGEMT:
-            current_exception = EMULATOR_TRAP_EXCEPTION;
-            break;**/
-        case SIGSYS:
-            current_exception = SYS_CALL_EXCEPTION;
-            break;
-        default:
-            current_exception = UNKNOWN_EXCEPTION;
-            fprintf(stderr, "Unexpected exception occurred: %d\n", sig);
-            break;
+        case SIGSEGV:   current_exception = SEGFAULT_EXCEPTION;             break;
+        case SIGFPE:    current_exception = DIVIDE_BY_ZERO_EXCEPTION;       break;
+        case SIGILL:    current_exception = ILLEGAL_INSTRUCTION_EXCEPTION;  break;
+        case SIGBUS:    current_exception = BUS_ERROR_EXCEPTION;            break;
+        case SIGABRT:   current_exception = ABORT_EXCEPTION;                break;
+        case SIGTRAP:   current_exception = TRAP_EXCEPTION;                 break;
+        case SIGSYS:    current_exception = SYS_CALL_EXCEPTION;             break;        
+        case SIGEMT:    current_exception = EMULATOR_TRAP_EXCEPTION;        break;
+        default:        current_exception = UNKNOWN_EXCEPTION;
+            fprintf(stderr, "Unexpected exception occurred: %d\n", sig);    break;
     }
     return current_exception;
 }
@@ -42,6 +24,11 @@ void handler(int sig) {
     exceptions current_exception = OK;
     current_exception = switch_to_exception(sig);
     handle_exception = current_exception;
+    longjmp(break_signal,1);
+}
+
+void throw(int error) {
+    handle_exception = error;
     longjmp(break_signal,1);
 }
 
@@ -55,7 +42,7 @@ int catch_error(int current_line) {
     signal(SIGABRT, handler);
     signal(SIGIOT, handler);
     signal(SIGTRAP, handler);
- /**   signal(SIGEMT, handler); **/
+    signal(SIGEMT, handler);
     signal(SIGSYS, handler);
 
     if (line == current_line) {

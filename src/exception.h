@@ -22,8 +22,12 @@ typedef enum exceptions {
     TRAP_EXCEPTION,                // SIGTRAP
     EMULATOR_TRAP_EXCEPTION,       // SIGEMT
     SYS_CALL_EXCEPTION,            // SIGSYS
-    UNKNOWN_EXCEPTION               // No matching fault
+    UNKNOWN_EXCEPTION              // No matching fault
 } exceptions;
+
+#ifndef SIGEMT
+#define SIGEMT -1
+#endif
 
 
 /* 
@@ -47,10 +51,12 @@ int catch_error(int current_line);
 int thrown_error(exceptions exception);
 int no_exception();
 void revert_back();
+void throw(int error);
 
 #define try setjmp(break_signal);while(catch_error(__LINE__))
 #define catch(x) ;if(thrown_error(x))
 #define finally ;if(no_exception())
 #define retry revert_back()
+#define create_exception(x) int x = __LINE__+50
 
 #endif

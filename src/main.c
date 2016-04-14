@@ -3,11 +3,13 @@
 
 int main() {
     int bad = 0;
+
+    create_exception(EXAMPLE_EXCEPTION);
     
     try {
-
         // Throw a segfault
         printf("Running okay..\n");
+        throw(EXAMPLE_EXCEPTION);
         float other = 1/bad;
         printf("Passed the exception!\n");
 
@@ -22,6 +24,10 @@ int main() {
 
         // Recover from segfault
         printf("Oh no a segfault!\n");
+
+    } catch (EXAMPLE_EXCEPTION) {
+
+        printf("Test example\n");
 
     } finally {
 
