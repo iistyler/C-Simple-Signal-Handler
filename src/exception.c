@@ -59,8 +59,10 @@ int catchError(int currentLine) {
 
     static int line = -1;
     if (line == currentLine) {
+        line = -1;
         return 0;
     } else {
+        handleException = OK;
         line = currentLine;
         return 1;
     }
@@ -80,6 +82,10 @@ int noException() {
         return 0;
 }
 
+void revertBack() {
+    longjmp(breakSig,1);
+}
+
 /* Allows user to print the exception to stderr */
 void print_error( Error err ) {
         fprint_error(err, stderr);
@@ -94,6 +100,15 @@ void print_error( Error err ) {
  *  => Open the offending file and print the actual line to look pretty
  */
 void fprint_error(Error err, FILE* stream) {
-        fprintf(stream, "Exception %d thrown from function %s [%s:%d]\n", err.exception, \
+
+    fprintf(stream, "Exception %d thrown from function %s [%s:%d]\n", err.exception, \
                             err.function, err.file, err.line); 
 }
+
+/*void *buffer[100];
+    int nptrs = 0;
+    char **strings;
+
+    nptrs = backtrace(buffer, 100);
+    strings = backtrace_symbols(buffer, nptrs);
+    printf("Exception thrown at: %s\n", strings[1]);*/
