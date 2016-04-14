@@ -8,11 +8,26 @@
 #include <string.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <execinfo.h>
 
-enum exceptions {
+jmp_buf break_signal;
+
+typedef enum exceptions {
     OK,
-    NOTOK
-};
+    SEGFAULT_EXCEPTION,            // SIGSEGV
+    DIVIDE_BY_ZERO_EXCEPTION,      // SIGFPE
+    ILLEGAL_INSTRUCTION_EXCEPTION, // SIGILL
+    BUS_ERROR_EXCEPTION,           // SIGBUS
+    ABORT_EXCEPTION,               // SIGABRT
+    TRAP_EXCEPTION,                // SIGTRAP
+    EMULATOR_TRAP_EXCEPTION,       // SIGEMT
+    SYS_CALL_EXCEPTION,            // SIGSYS
+    UNKNOWN_EXCEPTION              // No matching fault
+} exceptions;
+
+#ifndef SIGEMT
+#define SIGEMT -1
+#endif
 
 
 /* 
@@ -29,13 +44,19 @@ typedef struct Error {
 
 /* Interfaces for printing the errors that occured */
 void print_error (Error err);
-void fprint_error (Error err);
+void fprint_error (Error err, FILE * stream);
 
 
-int catchError(int currentLine);
-int thrownError();
+int catch_error(int current_line);
+int thrown_error(exceptions exception);
+int no_exception();
+void revert_back();
+void throw(int error);
 
-#define try while(catchError(__LINE__))
-#define catch ;if(thrownError())
+#define try setjmp(break_signal);while(catch_error(__LINE__))
+#define catch(x) ;if(thrown_error(x))
+#define finally ;if(no_exception())
+#define retry revert_back()
+#define create_exception(x) int x = __LINE__+50
 
 #endif
