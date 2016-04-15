@@ -1,9 +1,12 @@
 #include "main.h" 
 #include "exception.h"
 
+void test_unchecked();
+
 int main() {
     int bad = 0;
-
+	
+	test_unchecked();
     create_exception(EXAMPLE_EXCEPTION);
     
     try {
@@ -38,4 +41,10 @@ int main() {
     printf("Now let's continue...\n");
 
     return 0;   
+}
+
+
+/* Test exceptions that occur outside the scope of a try block */
+void test_unchecked() {
+	raise(SIGSEGV);
 }

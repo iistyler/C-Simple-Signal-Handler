@@ -2,6 +2,29 @@
 
 static exceptions handle_exception = OK;
 
+/* If we are compiling on gcc, this will execute before main(), which allows 
+ * us to catch any unchecked exceptions that occur before the first try block.
+ * 
+ * This relies on gcc as the __attribute__((constructor)) is a gcc construct. The
+ * program should still compile with other compilers, however the program will 
+ * not be able to catch any exception until the first try block is ran, setting up 
+ * the signal handlers.
+ *
+ */
+__attribute__((constructor)) void init_exceptions() {
+    signal(SIGSEGV, unchecked_handler);
+    signal(SIGFPE, unchecked_handler);
+    signal(SIGILL, unchecked_handler);
+    signal(SIGBUS, unchecked_handler);
+    signal(SIGABRT, unchecked_handler);
+    signal(SIGIOT, unchecked_handler);
+    signal(SIGTRAP, unchecked_handler);
+    signal(SIGEMT, unchecked_handler);
+    signal(SIGSYS, unchecked_handler);
+}
+
+
+/**/
 exceptions switch_to_exception (int sig) {
     exceptions current_exception = OK;
 
@@ -20,18 +43,41 @@ exceptions switch_to_exception (int sig) {
     return current_exception;
 }
 
+/**/
 void handler(int sig) {
     exceptions current_exception = OK;
     current_exception = switch_to_exception(sig);
     handle_exception = current_exception;
     longjmp(break_signal,1);
+
+	/* If the user want's core dumps then this needs to execute: */
+/*
+#ifdef CORE_DUMP
+	signal(sig, SIG_DFL);
+	kill(getpid(), sig);
+#endif
+*/
 }
 
+/* Deals with all exceptions that occur outside of a try-catch block. 
+ * This function will print out the stack trace, then exit the program as 
+ * there is not much else to do. 
+ *
+ * For this to work, need to set up some way to revert the signal handler to 
+ * this function after the end of a try-catch block. 
+ */
+void unchecked_handler(int sig) {
+	printf("Got unchecked exception, exiting...\n");
+	exit(EXIT_FAILURE);
+}
+
+/**/
 void throw(int error) {
     handle_exception = error;
     longjmp(break_signal,1);
 }
 
+/**/
 int catch_error(int current_line) {
     static int line = -1;
 
@@ -55,6 +101,7 @@ int catch_error(int current_line) {
     }
 }
 
+/**/
 int thrown_error(exceptions exception) {
     if (handle_exception == exception)
         return 1;
@@ -62,6 +109,7 @@ int thrown_error(exceptions exception) {
         return 0;
 }
 
+/**/
 int no_exception() {
     if (handle_exception == OK)
         return 1;
@@ -69,9 +117,11 @@ int no_exception() {
         return 0;
 }
 
+/**/
 void revert_back() {
     longjmp(break_signal,1);
 }
+
 
 /* Allows user to print the exception to stderr */
 void print_error( Error err ) {
@@ -90,6 +140,12 @@ void fprint_error(Error err, FILE* stream) {
 
     fprintf(stream, "Exception %d thrown from function %s [%s:%d]\n", err.exception, \
                             err.function, err.file, err.line); 
+}
+
+/* Print out the stack trace */
+void print_stacktrace () {
+
+
 }
 
 /*void *buffer[100];
