@@ -25,6 +25,7 @@ typedef enum exceptions {
     UNKNOWN_EXCEPTION              // No matching fault
 } exceptions;
 
+/* Ran into issues with this not being defined in some places */
 #ifndef SIGEMT
 #define SIGEMT -1
 #endif
@@ -52,6 +53,8 @@ int thrown_error(exceptions exception);
 int no_exception();
 void revert_back();
 void throw(int error);
+void handler (int sig);
+void unchecked_handler(int sig);
 
 #define try setjmp(break_signal);while(catch_error(__LINE__))
 #define catch(x) ;if(thrown_error(x))
@@ -59,4 +62,19 @@ void throw(int error);
 #define retry revert_back()
 #define create_exception(x) int x = __LINE__+50
 
-#endif
+
+/* 
+ * Trying out putting the signal handlers here to allow us to catch unchecked 
+ * exceptions. If they are only in catch_error, and a signal is raised before
+ * that function is called then nothing will happen.
+ *
+ * This constructor is a gcc macro, so only use when compiling with GCC
+ */
+#ifdef __GNUC__
+
+void init_exceptions() __attribute__((constructor));
+
+#endif /* __GNUC__ */
+
+
+#endif /* _exception_handler */
