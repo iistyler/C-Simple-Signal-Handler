@@ -55,6 +55,7 @@ void revert_back();
 void throw(int error);
 void handler (int sig);
 void unchecked_handler(int sig);
+extern void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction));
 
 #define try setjmp(break_signal);while(catch_error(__LINE__))
 #define catch(x) ;if(thrown_error(x))
