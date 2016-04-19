@@ -54,12 +54,13 @@ int no_exception();
 void revert_back();
 void throw(int error);
 void handler (int sig);
+int check_catch(int current_line);
 void unchecked_handler(int sig);
 extern void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction));
 
-#define try setjmp(break_signal);while(catch_error(__LINE__))
-#define catch(x) ;if(thrown_error(x))
-#define finally ;if(no_exception())
+#define try setjmp(break_signal);while(catch_error(__LINE__))if(check_catch(__LINE__))
+#define catch(x) else if(thrown_error(x))
+#define finally else if(no_exception())
 #define retry revert_back()
 #define create_exception(x) int x = __LINE__+50
 
