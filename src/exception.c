@@ -107,11 +107,41 @@ void throw(int error) {
 }
 
 /**/
-int catch_error(int current_line) {
+int check_catch(int current_line) {
     static int line = -1;
 
-    if (line == current_line) {
+    if (current_line == line) {
+        line = -1;
+        return 0;
+    } else {
+        line = current_line;
+        return 1;
+    }
+}
 
+/**/
+int catch_error(int current_line) {
+    static int line = -1;
+    static int times = 0;
+
+    if (line == current_line && times >= 2) {
+        times = 0;
+        resetSignals();
+
+        if (handle_exception != OK)
+            signalFunctions[handle_exception](-1);
+            //unchecked_handler(handle_exception);
+        
+        line = -1;
+        return 0;
+
+    } else if (times == 1) {
+        times++;
+        return 1;
+
+    } else {
+
+        times++;
         signal(SIGSEGV, handler);
         signal(SIGFPE,  handler);
         signal(SIGILL,  handler);
@@ -121,12 +151,6 @@ int catch_error(int current_line) {
         signal(SIGTRAP, handler);
         signal(SIGEMT,  handler);
         signal(SIGSYS,  handler);
-        line = -1;
-        return 0;
-
-    } else {
-
-        resetSignals();
         handle_exception = OK;
         line = current_line;
         return 1;
@@ -136,6 +160,9 @@ int catch_error(int current_line) {
 
 /**/
 int thrown_error(exceptions exception) {
+
+    if (handle_exception == exception)
+        handle_exception = OK;
 
     if (handle_exception == exception)
         return 1;
