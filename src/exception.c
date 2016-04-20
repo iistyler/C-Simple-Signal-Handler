@@ -1,6 +1,7 @@
 #include "exception.h"
 
 static exceptions handle_exception = OK;
+static int pendingException = 0;
 static void (*signalFunctions[10]) (int signal);
 
 void handler(int sig);
@@ -74,6 +75,7 @@ void resetSignals() {
 
 /**/
 void handler(int sig) {
+    pendingException = 1;
     exceptions current_exception = OK;
     current_exception = switch_to_exception(sig);
     handle_exception = current_exception;
@@ -124,11 +126,18 @@ int catch_error(int current_line) {
     static int line = -1;
     static int times = 0;
 
+    if (current_line == -1) {
+        // RESET
+        line = -1;
+        times = 0;
+        return 1;
+    }
+
     if (line == current_line && times >= 2) {
         times = 0;
         resetSignals();
 
-        if (handle_exception != OK)
+        if (pendingException == 1 && handle_exception != OK)
             signalFunctions[handle_exception](-1);
             //unchecked_handler(handle_exception);
         
@@ -141,6 +150,7 @@ int catch_error(int current_line) {
 
     } else {
 
+        // New try block
         times++;
         signal(SIGSEGV, handler);
         signal(SIGFPE,  handler);
@@ -152,6 +162,7 @@ int catch_error(int current_line) {
         signal(SIGEMT,  handler);
         signal(SIGSYS,  handler);
         handle_exception = OK;
+        pendingException = 0;
         line = current_line;
         return 1;
 
@@ -162,7 +173,7 @@ int catch_error(int current_line) {
 int thrown_error(exceptions exception) {
 
     if (handle_exception == exception)
-        handle_exception = OK;
+        pendingException = 0;
 
     if (handle_exception == exception)
         return 1;
@@ -181,7 +192,9 @@ int no_exception() {
 
 /**/
 void revert_back() {
-
+    pendingException = 0;
+    handle_exception = OK;
+    catch_error(-1);
     longjmp(break_signal,1);
 }
 
