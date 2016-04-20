@@ -9,6 +9,7 @@
 #include <signal.h>
 #include <setjmp.h>
 #include <execinfo.h>
+#include <pthread.h>
 
 jmp_buf break_signal;
 
