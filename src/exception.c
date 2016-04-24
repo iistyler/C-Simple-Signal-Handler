@@ -1,12 +1,12 @@
 #include "exception.h"
 
 static exceptions handle_exception = OK;
-static int pendingException = 0;
-static void (*signalFunctions[10]) (int signal);
+static int pending_exception = 0;
+static void (*signal_functions[10]) (int signal);
 
 void handler(int sig);
-void setupSignals();
-void resetSignals();
+void setup_signals();
+void reset_signal_defaults();
 
 /* If we are compiling on gcc, this will execute before main(), which allows 
  * us to catch any unchecked exceptions that occur before the first try block.
@@ -17,10 +17,14 @@ void resetSignals();
  * the signal handlers.
  *
  */
+#ifdef __GNUC__
+
 __attribute__((constructor)) void init_exceptions() {
-    setupSignals();
-    resetSignals();
+    setup_signals();
+    reset_signal_defaults();
 }
+
+#endif /* __GNUC__ */
 
 
 /**/
@@ -42,40 +46,41 @@ exceptions switch_to_exception (int sig) {
     return current_exception;
 }
 
+/**/
 void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction)) {
-    signalFunctions[exceptionName] = forwardFunction;
-    resetSignals();
+    signal_functions[exceptionName] = forwardFunction;
+    reset_signal_defaults();
 }
 
 /**/
-void setupSignals() {
-    signalFunctions[SEGFAULT_EXCEPTION] =               &unchecked_handler;
-    signalFunctions[DIVIDE_BY_ZERO_EXCEPTION] =         &unchecked_handler;
-    signalFunctions[ILLEGAL_INSTRUCTION_EXCEPTION] =    &unchecked_handler;
-    signalFunctions[BUS_ERROR_EXCEPTION] =              &unchecked_handler;
-    signalFunctions[ABORT_EXCEPTION] =                  &unchecked_handler;
-    signalFunctions[TRAP_EXCEPTION] =                   &unchecked_handler;
-    signalFunctions[SYS_CALL_EXCEPTION] =               &unchecked_handler;
-    signalFunctions[EMULATOR_TRAP_EXCEPTION] =          &unchecked_handler;
-    signalFunctions[UNKNOWN_EXCEPTION] =                &unchecked_handler;
+void setup_signals() {
+    signal_functions[SEGFAULT_EXCEPTION] =               &unchecked_handler;
+    signal_functions[DIVIDE_BY_ZERO_EXCEPTION] =         &unchecked_handler;
+    signal_functions[ILLEGAL_INSTRUCTION_EXCEPTION] =    &unchecked_handler;
+    signal_functions[BUS_ERROR_EXCEPTION] =              &unchecked_handler;
+    signal_functions[ABORT_EXCEPTION] =                  &unchecked_handler;
+    signal_functions[TRAP_EXCEPTION] =                   &unchecked_handler;
+    signal_functions[SYS_CALL_EXCEPTION] =               &unchecked_handler;
+    signal_functions[EMULATOR_TRAP_EXCEPTION] =          &unchecked_handler;
+    signal_functions[UNKNOWN_EXCEPTION] =                &unchecked_handler;
 }
 
 /**/
-void resetSignals() {
-    signal(SIGSEGV, signalFunctions[SEGFAULT_EXCEPTION]);
-    signal(SIGFPE,  signalFunctions[DIVIDE_BY_ZERO_EXCEPTION]);
-    signal(SIGILL,  signalFunctions[ILLEGAL_INSTRUCTION_EXCEPTION]);
-    signal(SIGBUS,  signalFunctions[BUS_ERROR_EXCEPTION]);
-    signal(SIGABRT, signalFunctions[ABORT_EXCEPTION]);
-    signal(SIGIOT,  signalFunctions[TRAP_EXCEPTION]);
-    signal(SIGTRAP, signalFunctions[SYS_CALL_EXCEPTION]);
-    signal(SIGEMT,  signalFunctions[EMULATOR_TRAP_EXCEPTION]);
-    signal(SIGSYS,  signalFunctions[UNKNOWN_EXCEPTION]);
+void reset_signal_defaults() {
+    signal(SIGSEGV, signal_functions[SEGFAULT_EXCEPTION]);
+    signal(SIGFPE,  signal_functions[DIVIDE_BY_ZERO_EXCEPTION]);
+    signal(SIGILL,  signal_functions[ILLEGAL_INSTRUCTION_EXCEPTION]);
+    signal(SIGBUS,  signal_functions[BUS_ERROR_EXCEPTION]);
+    signal(SIGABRT, signal_functions[ABORT_EXCEPTION]);
+    signal(SIGIOT,  signal_functions[TRAP_EXCEPTION]);
+    signal(SIGTRAP, signal_functions[SYS_CALL_EXCEPTION]);
+    signal(SIGEMT,  signal_functions[EMULATOR_TRAP_EXCEPTION]);
+    signal(SIGSYS,  signal_functions[UNKNOWN_EXCEPTION]);
 }
 
 /**/
 void handler(int sig) {
-    pendingException = 1;
+    pending_exception = 1;
     exceptions current_exception = OK;
     current_exception = switch_to_exception(sig);
     handle_exception = current_exception;
@@ -90,7 +95,9 @@ void handler(int sig) {
 */
 }
 
-/* Deals with all exceptions that occur outside of a try-catch block. 
+
+/* 
+ * Deals with all exceptions that occur outside of a try-catch block. 
  * This function will print out the stack trace, then exit the program as 
  * there is not much else to do. 
  *
@@ -135,10 +142,10 @@ int catch_error(int current_line) {
 
     if (line == current_line && times >= 2) {
         times = 0;
-        resetSignals();
+        reset_signal_defaults();
 
-        if (pendingException == 1 && handle_exception != OK)
-            signalFunctions[handle_exception](-1);
+        if (pending_exception == 1 && handle_exception != OK)
+            signal_functions[handle_exception](-1);
             //unchecked_handler(handle_exception);
         
         line = -1;
@@ -162,7 +169,7 @@ int catch_error(int current_line) {
         signal(SIGEMT,  handler);
         signal(SIGSYS,  handler);
         handle_exception = OK;
-        pendingException = 0;
+        pending_exception = 0;
         line = current_line;
         return 1;
 
@@ -173,7 +180,7 @@ int catch_error(int current_line) {
 int thrown_error(exceptions exception) {
 
     if (handle_exception == exception)
-        pendingException = 0;
+        pending_exception = 0;
 
     if (handle_exception == exception)
         return 1;
@@ -192,7 +199,7 @@ int no_exception() {
 
 /**/
 void revert_back() {
-    pendingException = 0;
+    pending_exception = 0;
     handle_exception = OK;
     catch_error(-1);
     longjmp(break_signal,1);
