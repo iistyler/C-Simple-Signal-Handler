@@ -36,34 +36,29 @@ static void handler (int sig);
  * the signal handlers.
  *
  */
-#ifdef __GNUC__
+#ifdef USING_GCC
 
 __attribute__((constructor)) void init_exceptions() {
     setup_signals();
     reset_signal_defaults();
 }
 
-#endif /* __GNUC__ */
+#endif /* USING_GCC */
 
-#ifndef __GNUC__
-
-#warning Library may not be entirely compatible without GNUC
-
-#endif
 
 /************************* [ Signal configuration ] ***************************/
 
 /**/
 void setup_signals() {
-    signal_functions[SEGFAULT_EXCEPTION] =               &unchecked_handler;
-    signal_functions[DIVIDE_BY_ZERO_EXCEPTION] =         &unchecked_handler;
-    signal_functions[ILLEGAL_INSTRUCTION_EXCEPTION] =    &unchecked_handler;
-    signal_functions[BUS_ERROR_EXCEPTION] =              &unchecked_handler;
-    signal_functions[ABORT_EXCEPTION] =                  &unchecked_handler;
-    signal_functions[TRAP_EXCEPTION] =                   &unchecked_handler;
-    signal_functions[SYS_CALL_EXCEPTION] =               &unchecked_handler;
-    signal_functions[EMULATOR_TRAP_EXCEPTION] =          &unchecked_handler;
-    signal_functions[UNKNOWN_EXCEPTION] =                &unchecked_handler;
+    signal_functions[SEGFAULT_EXCEPTION]               = &unchecked_handler;
+    signal_functions[DIVIDE_BY_ZERO_EXCEPTION]         = &unchecked_handler;
+    signal_functions[ILLEGAL_INSTRUCTION_EXCEPTION]    = &unchecked_handler;
+    signal_functions[BUS_ERROR_EXCEPTION]              = &unchecked_handler;
+    signal_functions[ABORT_EXCEPTION]                  = &unchecked_handler;
+    signal_functions[TRAP_EXCEPTION]                   = &unchecked_handler;
+    signal_functions[SYS_CALL_EXCEPTION]               = &unchecked_handler;
+    signal_functions[EMULATOR_TRAP_EXCEPTION]          = &unchecked_handler;
+    signal_functions[UNKNOWN_EXCEPTION]                = &unchecked_handler;
 }
 
 /**/
@@ -240,7 +235,6 @@ void retry() {
 
 /* Allows user to print the exception to stderr */
 void print_error( Error err ) {
-
         fprint_error(err, stderr);
 }
 

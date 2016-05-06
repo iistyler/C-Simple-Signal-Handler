@@ -89,11 +89,16 @@ extern void set_uncaught_exception(exceptions exceptionName, void(*forwardFuncti
  *
  * This constructor is a gcc macro, so only use when compiling with GCC
  */
-#ifdef __GNUC__
+#ifdef __clang__
 
+#warning Some features are not available when compiling with clang
+
+#else
+
+#define USING_GCC
 void init_exceptions() __attribute__((constructor));
 
-#endif /* __GNUC__ */
+#endif /* __clang__ */
 
 
 #endif /* _exception_handler */

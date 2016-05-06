@@ -8,7 +8,7 @@ all: src/main.c src/exception.c src/main.h src/exception.h
 
 test: src/exception.c src/exception.h tests/test.c tests/test.h
 	rm -rf tests/*.out
-	$(CC) $(FLAGS) src/exception.c tests/test.c -o tests/test.out
+	$(CC) $(TEST_FLAGS) src/exception.c tests/test.c -o tests/test.out
 	./tests/test.out
 
 release: src/exception.c src/exception.h
