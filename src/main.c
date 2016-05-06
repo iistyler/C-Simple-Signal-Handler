@@ -17,7 +17,7 @@ int main() {
         // Throw a segfault
         printf("Running okay..\n");
         //throw(EXAMPLE_EXCEPTION);
-        //float other = 1/bad;
+        float other = 1/bad;
         printf("Passed the exception!\n");
         //other = 10;
 

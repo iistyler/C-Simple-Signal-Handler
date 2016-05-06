@@ -1,12 +1,31 @@
+/*                                                                            */
+/*                 Title: C Exception handler                                 */
+/*                 File: exception.c                                          */
+/*                 Version: 1.0                                               */
+/*                 Build Version 1.0                                          */
+/*                 Last Modified: May 5, 2016                                 */
+/*                                                                            */
+
 #include "exception.h"
+
+/*************************** [ Static variables ] *****************************/
 
 static exceptions handle_exception = OK;
 static int pending_exception = 0;
 static void (*signal_functions[10]) (int signal);
 
-void handler(int sig);
-void setup_signals();
-void reset_signal_defaults();
+/************************* [ Function prototypes ] ****************************/
+
+static void setup_signals();
+static void reset_signal_defaults();
+static void unchecked_handler(int sig);
+static void handler (int sig);
+
+/********************* [ Macro verification and setup ] ***********************/
+
+#undef catch
+#undef finally
+#undef retry
 
 /* If we are compiling on gcc, this will execute before main(), which allows 
  * us to catch any unchecked exceptions that occur before the first try block.
@@ -26,31 +45,13 @@ __attribute__((constructor)) void init_exceptions() {
 
 #endif /* __GNUC__ */
 
+#ifndef __GNUC__
 
-/**/
-exceptions switch_to_exception (int sig) {
-    exceptions current_exception = OK;
+#warning Library may not be entirely compatible without GNUC
 
-    switch(sig) {
-        case SIGSEGV:   current_exception = SEGFAULT_EXCEPTION;             break;
-        case SIGFPE:    current_exception = DIVIDE_BY_ZERO_EXCEPTION;       break;
-        case SIGILL:    current_exception = ILLEGAL_INSTRUCTION_EXCEPTION;  break;
-        case SIGBUS:    current_exception = BUS_ERROR_EXCEPTION;            break;
-        case SIGABRT:   current_exception = ABORT_EXCEPTION;                break;
-        case SIGTRAP:   current_exception = TRAP_EXCEPTION;                 break;
-        case SIGSYS:    current_exception = SYS_CALL_EXCEPTION;             break;        
-        case SIGEMT:    current_exception = EMULATOR_TRAP_EXCEPTION;        break;
-        default:        current_exception = UNKNOWN_EXCEPTION;
-            fprintf(stderr, "Unexpected exception occurred: %d\n", sig);    break;
-    }
-    return current_exception;
-}
+#endif
 
-/**/
-void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction)) {
-    signal_functions[exceptionName] = forwardFunction;
-    reset_signal_defaults();
-}
+/************************* [ Signal configuration ] ***************************/
 
 /**/
 void setup_signals() {
@@ -77,6 +78,27 @@ void reset_signal_defaults() {
     signal(SIGEMT,  signal_functions[EMULATOR_TRAP_EXCEPTION]);
     signal(SIGSYS,  signal_functions[UNKNOWN_EXCEPTION]);
 }
+
+/**/
+exceptions switch_to_exception (int sig) {
+    exceptions current_exception = OK;
+
+    switch(sig) {
+        case SIGSEGV:   current_exception = SEGFAULT_EXCEPTION;             break;
+        case SIGFPE:    current_exception = DIVIDE_BY_ZERO_EXCEPTION;       break;
+        case SIGILL:    current_exception = ILLEGAL_INSTRUCTION_EXCEPTION;  break;
+        case SIGBUS:    current_exception = BUS_ERROR_EXCEPTION;            break;
+        case SIGABRT:   current_exception = ABORT_EXCEPTION;                break;
+        case SIGTRAP:   current_exception = TRAP_EXCEPTION;                 break;
+        case SIGSYS:    current_exception = SYS_CALL_EXCEPTION;             break;        
+        case SIGEMT:    current_exception = EMULATOR_TRAP_EXCEPTION;        break;
+        default:        current_exception = UNKNOWN_EXCEPTION;
+            fprintf(stderr, "Unexpected exception occurred: %d\n", sig);    break;
+    }
+    return current_exception;
+}
+
+/*********************** [ Global signal handling ] ***************************/
 
 /**/
 void handler(int sig) {
@@ -110,13 +132,21 @@ void unchecked_handler(int sig) {
 }
 
 /**/
+void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction)) {
+    signal_functions[exceptionName] = forwardFunction;
+    reset_signal_defaults();
+}
+
+/******************** [ Local catch block functions ] *************************/
+
+/**/
 void throw(int error) {
     handle_exception = error;
     longjmp(break_signal,1);
 }
 
 /**/
-int check_catch(int current_line) {
+int is_checking_catch(int current_line) {
     static int line = -1;
 
     if (current_line == line) {
@@ -129,7 +159,7 @@ int check_catch(int current_line) {
 }
 
 /**/
-int catch_error(int current_line) {
+int loop_through_exceptions(int current_line) {
     static int line = -1;
     static int times = 0;
 
@@ -177,7 +207,7 @@ int catch_error(int current_line) {
 }
 
 /**/
-int thrown_error(exceptions exception) {
+int catch(exceptions exception) {
 
     if (handle_exception == exception)
         pending_exception = 0;
@@ -189,7 +219,7 @@ int thrown_error(exceptions exception) {
 }
 
 /**/
-int no_exception() {
+int finally() {
 
     if (handle_exception == OK)
         return 1;
@@ -198,12 +228,14 @@ int no_exception() {
 }
 
 /**/
-void revert_back() {
+void retry() {
     pending_exception = 0;
     handle_exception = OK;
-    catch_error(-1);
+    loop_through_exceptions(-1); // Reset
     longjmp(break_signal,1);
 }
+
+/**************************** [ Error Messaging ] *****************************/
 
 
 /* Allows user to print the exception to stderr */

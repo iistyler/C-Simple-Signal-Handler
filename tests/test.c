@@ -1,4 +1,13 @@
-/* This is not part of the library and is just a series of automated tests */
+
+/*                                                                            */
+/*                 Title: C Exception handler testing framework               */
+/*                 File: test.h                                               */
+/*                 Version: 1.0                                               */
+/*                 Build Version 1.0                                          */
+/*                 Last Modified: May 5, 2016                                 */
+/*                                                                            */
+
+/* This is not part of the library and is just a series of unit tests */
 
 #include "test.h"
 #define NUMTESTS 5
