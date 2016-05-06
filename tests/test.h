@@ -1,4 +1,13 @@
-/* This is not part of the library and is just a series of automated tests */
+
+/*                                                                            */
+/*                 Title: C Exception handler testing framework               */
+/*                 File: test.h                                               */
+/*                 Version: 1.0                                               */
+/*                 Build Version 1.0                                          */
+/*                 Last Modified: May 5, 2016                                 */
+/*                                                                            */
+
+/* This is not part of the library and is just a series of unit tests */
 
 #ifndef _TESTS_MAIN
 #define _TESTS_MAIN
@@ -10,7 +19,6 @@
 #include <string.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <execinfo.h>
 
 #ifndef SIGSEGV
 #warning SEGFAULT_EXCEPTION cannot be tested on this OS

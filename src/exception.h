@@ -1,15 +1,29 @@
+/*                                                                            */
+/*                 Title: C Exception handler                                 */
+/*                 File: exception.h                                          */
+/*                 Version: 1.0                                               */
+/*                 Build Version 1.0                                          */
+/*                 Last Modified: May 5, 2016                                 */
+/*                                                                            */
+
 #ifndef _exception_handler
 #define _exception_handler
 #define _BSD_SOURCE
 
-#include <stdio.h>       /* Input/Output */
-#include <stdlib.h>      /* General Utilities */
-#include <unistd.h>      /* Symbolic Constants */
-#include <string.h>
-#include <signal.h>
-#include <setjmp.h>
-#include <execinfo.h>
-#include <pthread.h>
+/*************************** [ External libraries ] ***************************/
+
+#include <stdio.h>              // Input/Output
+#include <stdlib.h>             // General Utilities
+#include <signal.h>             // Signals
+#include <setjmp.h>             // longjumps
+
+/* Depricated includes (Seemingly unused) */
+//#include <execinfo.h>
+//#include <pthread.h>
+//#include <unistd.h>
+//#include <string.h>
+
+/********************* [ Structure and variable setup ] ***********************/
 
 jmp_buf break_signal;
 
@@ -31,44 +45,46 @@ typedef enum exceptions {
 #define SIGEMT -1
 #endif
 
-
 /* 
  * Format for defining the exception that occured, and allow the 
  * user to access information about the exception that occured
  *
  */
 typedef struct Error {
-    int exception;
-    int line;
-    char* function;
-    char* file;
+    int exception;                  // The exception number
+    int line;                       // Line number it happened on
+    char* function;                 // Function the error was thrown
+    char* file;                     // The file the error was thrown in
 } Error;
 
 /* Interfaces for printing the errors that occured */
 void print_error (Error err);
 void fprint_error (Error err, FILE * stream);
 
+/*************************** [ External functions ] ***************************/
 
-int catch_error(int current_line);
-int thrown_error(exceptions exception);
-int no_exception();
-void revert_back();
-void throw(int error);
-void handler (int sig);
-int check_catch(int current_line);
-void unchecked_handler(int sig);
+extern int loop_through_exceptions(int current_line);
+extern int catch(exceptions exception);
+extern int finally();
+extern void retry();
+extern void throw(int error);
+extern int is_checking_catch(int current_line);
 extern void set_uncaught_exception(exceptions exceptionName, void(*forwardFunction));
 
-#define try setjmp(break_signal);while(catch_error(__LINE__))if(check_catch(__LINE__))
-#define catch(x) else if(thrown_error(x))
-#define finally else if(no_exception())
-#define retry revert_back()
-#define create_exception(x) int x = __LINE__+50
+/***************************** [ Macro setup ] ********************************/
 
+#define try setjmp(break_signal);while(loop_through_exceptions(__LINE__))if(is_checking_catch(__LINE__))
+#define catch(x) else if(catch(x))
+#define finally else if(finally())
+#define retry retry()
+#define create_exception(x) int x = __LINE__+50 // THIS LINE NEEDS REFACTORING
+
+
+/************************* [ Macro error handling ] ***************************/
 
 /* 
  * Trying out putting the signal handlers here to allow us to catch unchecked 
- * exceptions. If they are only in catch_error, and a signal is raised before
+ * exceptions. If they are only in loop_through_exceptions, and a signal is raised before
  * that function is called then nothing will happen.
  *
  * This constructor is a gcc macro, so only use when compiling with GCC
