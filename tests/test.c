@@ -1,10 +1,9 @@
-
 /*                                                                            */
 /*                 Title: C Exception handler testing framework               */
 /*                 File: test.h                                               */
 /*                 Version: 1.0                                               */
 /*                 Build Version 1.0                                          */
-/*                 Last Modified: May 5, 2016                                 */
+/*                 Last Modified: Aug 26, 2016                                */
 /*                                                                            */
 
 /* This is not part of the library and is just a series of unit tests */
@@ -25,8 +24,16 @@ void catchExit() {
     printf("Unexpected exit\n");
 }
 
-int main() {
+int main(int argc, char * argv[]) {
+
+    // Set to hide details
+    if (argc > 1)
+        if (strcmp("-hideDetails", argv[1]) == 0)
+            freopen("/dev/null", "w", stdout);
+
+    // Run unit tests
     runTests();
+
     return 0;
 }
 
@@ -36,6 +43,8 @@ void runTests() {
     pid_t childpid;
     int status = 0;
     int fd[2];
+    system("rm tests/err");
+    int TT = 0;
 
     printf("\n");
 
@@ -71,6 +80,11 @@ void runTests() {
             printf("Test #%d Passed\n", i);
         } else {
             printf("Test #%d Failed\n", i);
+
+            // Add error define for compilation
+            FILE * errFile = fopen("tests/err", "a+");
+            fprintf(errFile, "-D T%d ", i);
+            fclose(errFile);
         }
         printf("--------------------------------\n\n");
         total += currentTest;
@@ -88,6 +102,7 @@ int checkTest(int testNumber) {
     
     FILE * compareFile = fopen("tests/compare.ref","w+");
     FILE * outputFile = fopen("tests/output.ref","w+");
+
     if (compareFile == NULL) {
         printf("Could not open file 'compare.ref'\n");
         exit(1);
