@@ -3,7 +3,7 @@
 /*                 File: exception.h                                          */
 /*                 Version: 1.0                                               */
 /*                 Build Version 1.0                                          */
-/*                 Last Modified: May 5, 2016                                 */
+/*                 Last Modified: Aug 26, 2016                                */
 /*                                                                            */
 
 #ifndef _exception_handler
@@ -16,6 +16,7 @@
 #include <stdlib.h>             // General Utilities
 #include <signal.h>             // Signals
 #include <setjmp.h>             // longjumps
+#include "../tests/errHeaders.h"   // Unit test errors
 
 /* Depricated includes (Seemingly unused) */
 //#include <execinfo.h>
